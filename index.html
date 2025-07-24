@@ -122,13 +122,44 @@
             align-items: center;
             gap: 10px;
         }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
 
         #settings-btn {
-             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
-            color: var(--color-grey-lightest); padding: 8px 12px; border-radius: 8px;
-            cursor: pointer; transition: background-color 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--color-grey-lightest);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 0.95rem;
         }
-         #settings-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        #settings-btn i {
+            margin-right: 8px;
+        }
+        #settings-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+        #logout-btn {
+            background-color: rgba(229, 62, 62, 0.4);
+            color: var(--color-brand-white);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: var(--font-primary);
+            font-weight: var(--font-weight-light);
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: background-color 0.3s ease;
+        }
+        #logout-btn:hover { background-color: rgba(229, 62, 62, 0.6); }
+        #logout-btn i { margin-right: 8px; }
 
 
         .container-title {
@@ -336,7 +367,10 @@
     <div id="app-wrapper">
         <header class="main-header">
             <div id="main-user-info"></div>
-            <button id="settings-btn"><i class="fa-solid fa-gear"></i> Innstillinger</button>
+            <div class="header-controls">
+                <button id="settings-btn"><i class="fa-solid fa-pen-to-square"></i> Rediger Oppgaver</button>
+                <button id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i>Logg ut</button>
+            </div>
         </header>
 
         <h2 class="container-title">
@@ -390,7 +424,7 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Your web app's Firebase configuration
@@ -435,6 +469,7 @@
         const authErrorEl = document.getElementById('auth-error');
         const mainUserInfoEl = document.getElementById('main-user-info');
         const dashboardDateEl = document.getElementById('dashboard-date');
+        const logoutBtn = document.getElementById('logout-btn');
         
         const calendarBody = document.getElementById('calendar-body');
         const currentPeriodEl = document.getElementById('current-period');
@@ -480,6 +515,10 @@
                 currentUserId = null;
                 authContainer.classList.remove('hidden');
                 appWrapper.style.display = 'none';
+                // Clear user specific data on logout
+                taskData = {};
+                userTasks = [];
+                currentUserFirstName = '';
             }
         });
 
@@ -529,6 +568,13 @@
             registerForm.classList.add('hidden');
             loginForm.classList.remove('hidden');
             authErrorEl.style.display = 'none';
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).catch((error) => {
+                console.error('Sign out error', error);
+                // Optionally show an error to the user
+            });
         });
 
         // --- HELPERS ---
@@ -596,7 +642,7 @@
 
         // --- RENDERING ---
         function render() {
-            if (!appWrapper) return;
+            if (!appWrapper || !currentUserId) return;
             calendarBody.innerHTML = '';
             calendarBody.className = 'calendar-body';
             calendarBody.classList.add(`${currentView}-view`);
@@ -914,7 +960,19 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: 'white', stepSize: 20 }},
+                        y: { 
+                            beginAtZero: true, 
+                            max: 105, 
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }, 
+                            ticks: { 
+                                color: 'white', 
+                                stepSize: 25,
+                                callback: function(value) {
+                                   // Sørger for at den ikke viser en tick over 100
+                                   return value <= 100 ? value : null;
+                                }
+                            }
+                        },
                         x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'white' } }
                     },
                     plugins: { legend: { display: false } }
