@@ -45,7 +45,6 @@
             left: 0;
             width: 100%;
             height: 100%;
-            /* UPDATED: Changed back to 'cover' to fill the screen and avoid black bars */
             object-fit: cover; 
             z-index: -1;
             filter: brightness(1) contrast(1.0);
@@ -58,12 +57,10 @@
             padding: 20px;
         }
 
-        /* NEW: Wrapper for title and auth box */
         .auth-content-wrapper {
             text-align: center;
         }
 
-        /* NEW: Style for the main title on the auth page */
         .auth-main-title {
             font-size: 2.8rem;
             font-weight: var(--font-weight-light);
@@ -79,8 +76,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px; padding: 40px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            display: inline-block; /* To respect the text-align of the wrapper */
-            text-align: left; /* Reset text-align for form content */
+            display: inline-block;
+            text-align: left;
         }
         .auth-box h2 {
             text-align: center; font-size: 2rem;
@@ -306,10 +303,66 @@
 
         .hidden { display: none !important; }
         
-        /* --- Settings Modal --- */
-        #settings-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        #settings-modal { background-color: rgba(28, 28, 28, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 30px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-        #settings-modal h2 { text-align: center; margin-bottom: 25px; font-weight: var(--font-weight-light); }
+        /* --- Settings & Confirmation Modals --- */
+        #settings-modal-overlay, #save-confirm-modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.7); 
+            backdrop-filter: blur(5px); 
+            z-index: 1000; 
+            display: flex; align-items: center; justify-content: center; 
+        }
+        #settings-modal, #save-confirm-modal { 
+            background-color: rgba(28, 28, 28, 0.9); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 12px; 
+            padding: 30px; 
+            width: 90%; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        #settings-modal {
+            max-width: 600px; max-height: 90vh; overflow-y: auto;
+        }
+        #save-confirm-modal {
+             max-width: 450px; text-align: center;
+        }
+        #settings-modal h2, #save-confirm-modal h2 { 
+            text-align: center; margin-bottom: 15px; font-weight: var(--font-weight-light); 
+        }
+        #save-confirm-modal p {
+            margin-bottom: 25px;
+            color: var(--color-grey-lightest);
+            font-size: 1rem;
+        }
+        .save-options {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .save-options button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+         .save-options button:hover {
+            transform: translateY(-2px);
+        }
+        #save-future-btn {
+            background-color: var(--color-brand-accent);
+            color: white;
+        }
+        #save-override-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        #save-cancel-btn {
+             background-color: transparent;
+             border: 1px solid rgba(255, 255, 255, 0.3);
+             color: white;
+        }
+
         .settings-task-list { display: flex; flex-direction: column; gap: 20px; margin-bottom: 25px; }
         .settings-task { background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; }
         .settings-task-inputs { display: grid; grid-template-columns: 1fr 1fr 80px; gap: 15px; align-items: center; }
@@ -347,7 +400,6 @@
     <img src="https://storage.googleapis.com/intro_alphatek/norge%20landscapem.jpeg" id="background-image" alt="Norsk landskap med fjell og fjord">
 
     <div id="auth-container">
-        <!-- UPDATED: Added a wrapper for the title and the auth box -->
         <div class="auth-content-wrapper">
             <h1 class="auth-main-title">Produktivitetskalender</h1>
             <div class="auth-box">
@@ -442,12 +494,25 @@
         </div>
     </div>
 
+    <!-- Save Confirmation Modal -->
+    <div id="save-confirm-modal-overlay" class="hidden">
+        <div id="save-confirm-modal">
+            <h2>Lagre endringer</h2>
+            <p>Skal endringene gjelde kun for denne uken, eller for alle fremtidige uker?</p>
+            <div class="save-options">
+              <button id="save-override-btn">Kun denne uken</button>
+              <button id="save-future-btn">For fremtiden</button>
+              <button id="save-cancel-btn">Avbryt</button>
+            </div>
+        </div>
+    </div>
+
 
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -473,7 +538,9 @@
         const DAY_NAMES_SETTINGS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
 
 
-        let userTasks = [];
+        let baseUserTasks = [];
+        let taskOverrides = {}; // Cache for weekly overrides { 'YYYY-MM-DD': tasks_array }
+        let pendingTaskChanges = []; // Store changes from settings modal before confirmation
         let currentDate = new Date();
         let currentView = 'week';
         let taskData = {};
@@ -513,6 +580,12 @@
         const addTaskBtn = document.getElementById('add-task-btn');
         const modalCloseBtn = document.getElementById('modal-close-btn');
 
+        // Confirmation Modal Elements
+        const saveConfirmModalOverlay = document.getElementById('save-confirm-modal-overlay');
+        const saveFutureBtn = document.getElementById('save-future-btn');
+        const saveOverrideBtn = document.getElementById('save-override-btn');
+        const saveCancelBtn = document.getElementById('save-cancel-btn');
+
 
         // --- AUTHENTICATION ---
         onAuthStateChanged(auth, async (user) => {
@@ -531,6 +604,7 @@
                 
                 await loadSettingsFromFirestore();
                 await loadTaskDataFromFirestore();
+                await loadAllTaskOverrides(); // Load all overrides for the user once
                 render();
 
             } else {
@@ -539,7 +613,8 @@
                 appWrapper.style.display = 'none';
                 // Clear user specific data on logout
                 taskData = {};
-                userTasks = [];
+                baseUserTasks = [];
+                taskOverrides = {};
                 currentUserFirstName = '';
             }
         });
@@ -595,12 +670,19 @@
         logoutBtn.addEventListener('click', () => {
             signOut(auth).catch((error) => {
                 console.error('Sign out error', error);
-                // Optionally show an error to the user
             });
         });
 
         // --- HELPERS ---
         const formatDate = (date) => date.toISOString().split('T')[0];
+        
+        const getStartOfWeek = (d) => {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            return new Date(date.setDate(diff));
+        };
+
         const getWeekNumber = (d) => {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -618,16 +700,79 @@
             return { start: startDate, end: endDate };
         };
 
-        // --- DATA STORAGE (FIRESTORE) ---
+        // --- DATA STORAGE & LOGIC (FIRESTORE) ---
         function getDefaultTasks() {
+            // UPDATED default tasks for new users
             return [
-                { id: 'jobb', title: 'Jobb 8 timer', abbr: 'Jobb', activeDays: [true, true, true, true, true, false, false] },
+                { id: 'jobb', title: 'Jobbe max 6 timer', abbr: 'Jobb', activeDays: [true, true, true, true, true, false, false] },
                 { id: 'mat', title: 'Spise sunt', abbr: 'Mat', activeDays: [true, true, true, true, true, true, true] },
                 { id: 'sovn', title: 'Legge meg tidlig', abbr: 'Søvn', activeDays: [true, true, true, true, true, false, false] },
                 { id: 'lese', title: 'Lese', abbr: 'Lese', activeDays: [true, true, true, true, true, true, true] },
                 { id: 'styrke', title: 'Trene styrke', abbr: 'Styrke', activeDays: [true, false, true, false, true, false, false] },
-                { id: 'loping', title: 'Trene løping', abbr: 'Løp', activeDays: [false, true, false, true, false, true, false] }
+                { id: 'refleksjon', title: '15 min selvrefleksjon', abbr: 'Reflek', activeDays: [true, true, true, true, true, true, true] }
             ];
+        }
+
+        function getTasksForDate(date) {
+            const startOfWeekStr = formatDate(getStartOfWeek(date));
+            if (taskOverrides[startOfWeekStr]) {
+                return taskOverrides[startOfWeekStr];
+            }
+            return baseUserTasks;
+        }
+        
+        function getUniqueTasks() {
+            const allTasks = [...baseUserTasks];
+            Object.values(taskOverrides).forEach(overrideTasks => {
+                allTasks.push(...overrideTasks);
+            });
+            
+            const uniqueTasks = [];
+            const taskIds = new Set();
+            for (const task of allTasks) {
+                if (!taskIds.has(task.id)) {
+                    uniqueTasks.push(task);
+                    taskIds.add(task.id);
+                }
+            }
+            return uniqueTasks;
+        }
+
+        async function saveBaseSettingsToFirestore(newTasks) {
+            if (!currentUserId) return;
+            baseUserTasks = newTasks; // Update state immediately
+            const settingsDocRef = doc(db, "users", currentUserId, "settings", "tasks");
+            await setDoc(settingsDocRef, { userTasks: newTasks });
+        }
+
+        async function saveWeekOverrideToFirestore(weekStartDate, newTasks) {
+            if (!currentUserId) return;
+            const weekStartDateStr = formatDate(weekStartDate);
+            taskOverrides[weekStartDateStr] = newTasks; // Update state
+            const overrideDocRef = doc(db, "users", currentUserId, "taskOverrides", weekStartDateStr);
+            await setDoc(overrideDocRef, { tasks: newTasks });
+        }
+        
+        async function loadSettingsFromFirestore() {
+            if (!currentUserId) return;
+            const settingsDocRef = doc(db, "users", currentUserId, "settings", "tasks");
+            const docSnap = await getDoc(settingsDocRef);
+            if (docSnap.exists() && docSnap.data().userTasks) {
+                baseUserTasks = docSnap.data().userTasks;
+            } else {
+                baseUserTasks = getDefaultTasks();
+                await saveBaseSettingsToFirestore(baseUserTasks); // Save defaults for new users
+            }
+        }
+        
+        async function loadAllTaskOverrides() {
+            if (!currentUserId) return;
+            taskOverrides = {}; // Reset cache
+            const overridesCollectionRef = collection(db, "users", currentUserId, "taskOverrides");
+            const querySnapshot = await getDocs(overridesCollectionRef);
+            querySnapshot.forEach((doc) => {
+                taskOverrides[doc.id] = doc.data().tasks;
+            });
         }
 
         async function saveTaskDataToFirestore() {
@@ -642,25 +787,6 @@
             const docSnap = await getDoc(userTasksDocRef);
             taskData = docSnap.exists() ? docSnap.data() : {};
         }
-        
-        async function saveSettingsToFirestore() {
-            if (!currentUserId) return;
-            const settingsDocRef = doc(db, "users", currentUserId, "settings", "tasks");
-            await setDoc(settingsDocRef, { userTasks });
-        }
-        
-        async function loadSettingsFromFirestore() {
-            if (!currentUserId) return;
-            const settingsDocRef = doc(db, "users", currentUserId, "settings", "tasks");
-            const docSnap = await getDoc(settingsDocRef);
-            if (docSnap.exists() && docSnap.data().userTasks) {
-                userTasks = docSnap.data().userTasks;
-            } else {
-                userTasks = getDefaultTasks();
-                await saveSettingsToFirestore(); // Save defaults for new users
-            }
-        }
-
 
         // --- RENDERING ---
         function render() {
@@ -680,13 +806,11 @@
         }
 
         function renderWeekView() {
-            const today = new Date(currentDate);
-            const dayOfWeek = today.getDay();
-            const startOfWeek = new Date(today.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)));
+            const weekStart = getStartOfWeek(currentDate);
             
             for (let i = 0; i < 7; i++) {
-                const day = new Date(startOfWeek);
-                day.setDate(startOfWeek.getDate() + i);
+                const day = new Date(weekStart);
+                day.setDate(weekStart.getDate() + i);
                 const dayColumn = document.createElement('div');
                 dayColumn.className = 'day-column';
                 const dayHeader = document.createElement('div');
@@ -696,8 +820,9 @@
                 
                 const dateStr = formatDate(day);
                 const dayIndex = day.getDay() === 0 ? 6 : day.getDay() - 1; // Mon=0, Sun=6
+                const tasksForDay = getTasksForDate(day);
 
-                userTasks.forEach(task => {
+                tasksForDay.forEach(task => {
                     if (task.activeDays[dayIndex]) {
                         const taskEl = document.createElement('div');
                         const state = taskData[dateStr]?.[task.id] || 0;
@@ -715,18 +840,19 @@
         function renderMonthView() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const firstDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Mon=0
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const firstDayOfWeek = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
             
             for (let i = 0; i < firstDayOfWeek; i++) {
                 calendarBody.appendChild(document.createElement('div')).className = 'month-day other-month';
             }
             
-            for (let i = 1; i <= lastDay.getDate(); i++) {
+            for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
                 const day = new Date(year, month, i);
                 const dateStr = formatDate(day);
-                const dayIndex = day.getDay() === 0 ? 6 : day.getDay() - 1; // Mon=0
+                const dayIndex = day.getDay() === 0 ? 6 : day.getDay() - 1;
+                const tasksForDay = getTasksForDate(day);
 
                 const dayEl = document.createElement('div');
                 dayEl.className = 'month-day';
@@ -735,7 +861,7 @@
                 dayNumber.textContent = i;
                 dayEl.appendChild(dayNumber);
                 
-                userTasks.forEach(task => {
+                tasksForDay.forEach(task => {
                     if (task.activeDays[dayIndex]) {
                         const taskEl = document.createElement('div');
                         const state = taskData[dateStr]?.[task.id] || 0;
@@ -769,7 +895,8 @@
                 for (let i = 1; i <= lastDay.getDate(); i++) {
                     const day = new Date(year, month, i);
                     const dateStr = formatDate(day);
-                    const dayIndex = day.getDay() === 0 ? 6 : day.getDay() - 1; // Mon=0
+                    const dayIndex = day.getDay() === 0 ? 6 : day.getDay() - 1;
+                    const tasksForDay = getTasksForDate(day);
 
                     const dayContainer = document.createElement('div');
                     dayContainer.className = 'year-day-dot-container';
@@ -778,7 +905,7 @@
                     
                     const dotsWrapper = document.createElement('div');
                     dotsWrapper.className = 'year-day-dots';
-                    userTasks.forEach(task => {
+                    tasksForDay.forEach(task => {
                         if (task.activeDays[dayIndex]) {
                             const state = taskData[dateStr]?.[task.id] || 0;
                             const dot = document.createElement('div');
@@ -821,31 +948,32 @@
             
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                 const dateStr = formatDate(d);
-                const dayIndex = d.getDay() === 0 ? 6 : d.getDay() - 1; // Mon=0, Sun=6
+                const dayIndex = d.getDay() === 0 ? 6 : d.getDay() - 1;
+                const tasksForThisDay = getTasksForDate(d);
 
-                const tasksForThisDay = userTasks.filter(task => task.activeDays[dayIndex]);
                 const processState = (state) => {
                     if (state === 1) counts.red++;
                     if (state === 2) counts.yellow++;
                     if (state === 3) counts.green++;
                 };
 
+                const relevantTasksForDay = tasksForThisDay.filter(task => task.activeDays[dayIndex]);
+
                 if (taskId === 'all') {
-                    maxTasks += tasksForThisDay.length;
+                    maxTasks += relevantTasksForDay.length;
                     if (taskData[dateStr]) {
-                        Object.entries(taskData[dateStr]).forEach(([id, state]) => {
-                           if (tasksForThisDay.some(t => t.id === id)) {
-                                processState(state);
-                           }
+                        relevantTasksForDay.forEach(task => {
+                            if (taskData[dateStr][task.id]) {
+                                processState(taskData[dateStr][task.id]);
+                            }
                         });
                     }
                 } else {
-                    const specificTask = tasksForThisDay.find(t => t.id === taskId);
+                    const specificTask = relevantTasksForDay.find(t => t.id === taskId);
                     if (specificTask) {
                         maxTasks++;
                          if (taskData[dateStr] && taskData[dateStr][taskId]) {
-                            const state = taskData[dateStr][taskId];
-                            processState(state);
+                            processState(taskData[dateStr][taskId]);
                         }
                     }
                 }
@@ -861,11 +989,11 @@
         function updateDashboard() {
             const selectedTaskId = taskFilterEl.value;
             let currentStartDate, currentEndDate, prevStartDate, prevEndDate;
-            const year = currentDate.getFullYear(), month = currentDate.getMonth(), dayOfWeek = currentDate.getDay();
+            const year = currentDate.getFullYear(), month = currentDate.getMonth();
             
             switch(currentView) {
                 case 'week':
-                    currentStartDate = new Date(currentDate); currentStartDate.setDate(currentDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+                    currentStartDate = getStartOfWeek(new Date(currentDate));
                     currentEndDate = new Date(currentStartDate); currentEndDate.setDate(currentStartDate.getDate() + 6);
                     prevStartDate = new Date(currentStartDate); prevStartDate.setDate(currentStartDate.getDate() - 7);
                     prevEndDate = new Date(prevStartDate); prevEndDate.setDate(prevStartDate.getDate() + 6);
@@ -924,9 +1052,7 @@
             switch(currentView) {
                 case 'week':
                     trendTitleEl.textContent = 'Daglig Utvikling';
-                    const dayOfWeek = currentDate.getDay();
-                    const startOfWeek = new Date(currentDate);
-                    startOfWeek.setDate(currentDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+                    const startOfWeek = getStartOfWeek(currentDate);
                     for (let i = 0; i < 7; i++) {
                         const date = new Date(startOfWeek);
                         date.setDate(startOfWeek.getDate() + i);
@@ -1008,7 +1134,9 @@
         // --- SETTINGS MODAL ---
         function renderSettingsModal() {
             settingsTaskListEl.innerHTML = '';
-            userTasks.forEach((task, index) => {
+            const tasksToDisplay = getTasksForDate(currentDate);
+
+            tasksToDisplay.forEach((task, index) => {
                 const taskEl = document.createElement('div');
                 taskEl.className = 'settings-task';
                 taskEl.innerHTML = `
@@ -1028,7 +1156,7 @@
                 `;
                 settingsTaskListEl.appendChild(taskEl);
             });
-            addTaskBtn.disabled = userTasks.length >= 6;
+            addTaskBtn.disabled = tasksToDisplay.length >= 6;
         }
         
         function openSettingsModal() {
@@ -1036,43 +1164,107 @@
             settingsModalOverlay.classList.remove('hidden');
         }
 
-        async function closeSettingsModal() {
-            // Save changes from inputs
+        function closeSettingsModal() {
+            // Save changes from inputs to a temporary variable
+            pendingTaskChanges = [];
             settingsTaskListEl.querySelectorAll('.settings-task').forEach((taskEl, index) => {
-                if(userTasks[index]) {
-                    userTasks[index].title = taskEl.querySelector('input[data-field="title"]').value;
-                    userTasks[index].abbr = taskEl.querySelector('input[data-field="abbr"]').value;
-                    taskEl.querySelectorAll('input[type="checkbox"]').forEach((checkbox, dayIndex) => {
-                        userTasks[index].activeDays[dayIndex] = checkbox.checked;
-                    });
-                }
+                const title = taskEl.querySelector('input[data-field="title"]').value;
+                const abbr = taskEl.querySelector('input[data-field="abbr"]').value;
+                const activeDays = Array.from(taskEl.querySelectorAll('input[type="checkbox"]')).map(cb => cb.checked);
+                
+                // Keep original ID if it exists, otherwise generate a new one
+                const originalTasks = getTasksForDate(currentDate);
+                const id = originalTasks[index]?.id || `custom_${Date.now()}`;
+
+                pendingTaskChanges.push({ id, title, abbr, activeDays });
             });
-            await saveSettingsToFirestore();
+            
             settingsModalOverlay.classList.add('hidden');
-            render(); // Re-render the whole app with new settings
+            saveConfirmModalOverlay.classList.remove('hidden');
         }
 
         settingsBtn.addEventListener('click', openSettingsModal);
         modalCloseBtn.addEventListener('click', closeSettingsModal);
         
         addTaskBtn.addEventListener('click', () => {
-            if (userTasks.length < 6) {
-                userTasks.push({
+            const tasksToDisplay = getTasksForDate(currentDate);
+            if (tasksToDisplay.length < 6) {
+                // We're modifying the displayed list directly, not the base tasks
+                const newTask = {
                     id: `custom_${Date.now()}`,
                     title: 'Ny Oppgave',
                     abbr: 'Ny',
                     activeDays: [true, true, true, true, true, true, true]
-                });
-                renderSettingsModal();
+                };
+                
+                // Create a new task element and add it to the DOM
+                const taskEl = document.createElement('div');
+                taskEl.className = 'settings-task';
+                const newIndex = tasksToDisplay.length;
+                taskEl.innerHTML = `
+                    <div class="settings-task-inputs">
+                        <input type="text" placeholder="Oppgavenavn" value="${newTask.title}" data-index="${newIndex}" data-field="title">
+                        <input type="text" placeholder="Forkortelse" value="${newTask.abbr}" data-index="${newIndex}" data-field="abbr" maxlength="6">
+                        <button class="delete-task-btn" data-index="${newIndex}"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div class="settings-task-days">
+                        ${DAY_NAMES_SETTINGS.map((day, dayIndex) => `
+                            <div class="day-toggle">
+                                <label>${day}</label>
+                                <input type="checkbox" ${newTask.activeDays[dayIndex] ? 'checked' : ''} data-index="${newIndex}" data-day="${dayIndex}">
+                            </div>
+                        `).join('')}
+                    </div>`;
+                settingsTaskListEl.appendChild(taskEl);
+                addTaskBtn.disabled = (newIndex + 1) >= 6;
             }
         });
 
         settingsTaskListEl.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-task-btn')) {
-                const index = e.target.closest('.delete-task-btn').dataset.index;
-                userTasks.splice(index, 1);
-                renderSettingsModal();
+            const deleteBtn = e.target.closest('.delete-task-btn');
+            if (deleteBtn) {
+                // Just remove the element from the DOM. The actual data is handled on save.
+                deleteBtn.closest('.settings-task').remove();
+                // Re-enable add button if needed
+                const currentTaskCount = settingsTaskListEl.querySelectorAll('.settings-task').length;
+                addTaskBtn.disabled = currentTaskCount >= 6;
             }
+        });
+        
+        // --- Save Confirmation Logic ---
+        saveCancelBtn.addEventListener('click', () => {
+            pendingTaskChanges = [];
+            saveConfirmModalOverlay.classList.add('hidden');
+        });
+
+        saveOverrideBtn.addEventListener('click', async () => {
+            const weekStartDate = getStartOfWeek(currentDate);
+            await saveWeekOverrideToFirestore(weekStartDate, pendingTaskChanges);
+            
+            pendingTaskChanges = [];
+            saveConfirmModalOverlay.classList.add('hidden');
+            render();
+        });
+
+        saveFutureBtn.addEventListener('click', async () => {
+            await saveBaseSettingsToFirestore(pendingTaskChanges);
+            
+            // Clear any overrides from the current week forward
+            const weekStartDateStr = formatDate(getStartOfWeek(currentDate));
+            const overridesRef = collection(db, "users", currentUserId, "taskOverrides");
+            const q = query(overridesRef, where("__name__", ">=", weekStartDateStr));
+            
+            const snapshot = await getDocs(q);
+            const batch = writeBatch(db);
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+                delete taskOverrides[doc.id]; // Also remove from local cache
+            });
+            await batch.commit();
+
+            pendingTaskChanges = [];
+            saveConfirmModalOverlay.classList.add('hidden');
+            render();
         });
 
 
@@ -1126,8 +1318,9 @@
 
         // --- INIT ---
         function populateTaskFilter() {
+            const uniqueTasks = getUniqueTasks();
             taskFilterEl.innerHTML = '<option value="all">Alle Oppgaver</option>';
-            userTasks.forEach(task => {
+            uniqueTasks.forEach(task => {
                 const option = document.createElement('option');
                 option.value = task.id;
                 option.textContent = task.title;
@@ -1135,7 +1328,6 @@
             });
         }
 
-        // Initial app rendering is triggered by the onAuthStateChanged listener
     </script>
 </body>
 </html>
