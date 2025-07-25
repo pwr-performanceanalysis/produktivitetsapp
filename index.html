@@ -10,7 +10,7 @@
     <style>
         :root {
             --color-brand-black: #0D0D0D;
-            --color-brand-accent: rgb(47, 124, 83);
+            --color-brand-accent: rgb(59, 130, 246); 
             --color-brand-white: #FFFFFF;
             --color-grey-lightest: #D9D9D9;
             --font-primary: 'Roboto', sans-serif;
@@ -38,13 +38,17 @@
             line-height: 1.6;
             font-weight: var(--font-weight-light);
         }
-
-        #background-video {
-            position: fixed; top: 50%; left: 50%;
-            min-width: 100%; min-height: 100%;
-            width: auto; height: auto; z-index: -1;
-            transform: translateX(-50%) translateY(-50%);
-            object-fit: cover; filter: brightness(0.7) contrast(1.0);
+        
+        #background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* UPDATED: Changed back to 'cover' to fill the screen and avoid black bars */
+            object-fit: cover; 
+            z-index: -1;
+            filter: brightness(1) contrast(1.0);
         }
         
         /* --- Auth Container --- */
@@ -53,6 +57,21 @@
             display: flex; align-items: center; justify-content: center;
             padding: 20px;
         }
+
+        /* NEW: Wrapper for title and auth box */
+        .auth-content-wrapper {
+            text-align: center;
+        }
+
+        /* NEW: Style for the main title on the auth page */
+        .auth-main-title {
+            font-size: 2.8rem;
+            font-weight: var(--font-weight-light);
+            color: var(--color-brand-white);
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+        }
+
         .auth-box {
             width: 100%; max-width: 400px;
             background-color: rgba(20, 20, 20, 0.6);
@@ -60,6 +79,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px; padding: 40px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: inline-block; /* To respect the text-align of the wrapper */
+            text-align: left; /* Reset text-align for form content */
         }
         .auth-box h2 {
             text-align: center; font-size: 2rem;
@@ -84,7 +105,7 @@
             border-radius: 8px; font-size: 1.1rem;
             cursor: pointer; transition: background-color 0.3s;
         }
-        .auth-btn:hover { background-color: rgb(60, 140, 98); }
+        .auth-btn:hover { background-color: rgb(37, 99, 235); }
         .toggle-form {
             text-align: center; margin-top: 20px;
             font-size: 0.9rem;
@@ -240,7 +261,7 @@
         .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0; padding: 0 10px; }
         .header-left, .header-center, .header-right { display: flex; align-items: center; gap: 15px; }
         .header-center { flex-grow: 1; justify-content: center; }
-       
+        
         .nav-btn, .view-btn {
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
             color: var(--color-grey-lightest); padding: 8px 16px; border-radius: 8px;
@@ -323,44 +344,45 @@
     </style>
 </head>
 <body>
-    <video autoplay muted loop playsinline id="background-video">
-        <source src="https://storage.googleapis.com/intro_alphatek/intro.mp4" type="video/mp4">
-        Nettleseren din støtter ikke video-taggen.
-    </video>
+    <img src="https://storage.googleapis.com/intro_alphatek/norge%20landscapem.jpeg" id="background-image" alt="Norsk landskap med fjell og fjord">
 
     <div id="auth-container">
-        <div class="auth-box">
-            <!-- Login Form -->
-            <form id="login-form">
-                <h2>Logg inn</h2>
-                <div class="form-group">
-                    <input type="email" id="login-email" placeholder="E-post" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="login-password" placeholder="Passord" required>
-                </div>
-                <button type="submit" class="auth-btn">Logg inn</button>
-                <p class="toggle-form">Har du ikke konto? <span id="show-register">Registrer deg</span></p>
-            </form>
-            <!-- Register Form -->
-            <form id="register-form" class="hidden">
-                <h2>Registrer deg</h2>
-                <div class="form-group">
-                    <input type="text" id="register-firstname" placeholder="Fornavn" required>
-                </div>
-                 <div class="form-group">
-                    <input type="text" id="register-lastname" placeholder="Etternavn" required>
-                </div>
-                <div class="form-group">
-                    <input type="email" id="register-email" placeholder="E-post" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="register-password" placeholder="Passord" required>
-                </div>
-                <button type="submit" class="auth-btn">Registrer</button>
-                <p class="toggle-form">Har du allerede konto? <span id="show-login">Logg inn</span></p>
-            </form>
-            <p id="auth-error"></p>
+        <!-- UPDATED: Added a wrapper for the title and the auth box -->
+        <div class="auth-content-wrapper">
+            <h1 class="auth-main-title">Produktivitetskalender</h1>
+            <div class="auth-box">
+                <!-- Login Form -->
+                <form id="login-form">
+                    <h2>Logg inn</h2>
+                    <div class="form-group">
+                        <input type="email" id="login-email" placeholder="E-post" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="login-password" placeholder="Passord" required>
+                    </div>
+                    <button type="submit" class="auth-btn">Logg inn</button>
+                    <p class="toggle-form">Har du ikke konto? <span id="show-register">Registrer deg</span></p>
+                </form>
+                <!-- Register Form -->
+                <form id="register-form" class="hidden">
+                    <h2>Registrer deg</h2>
+                    <div class="form-group">
+                        <input type="text" id="register-firstname" placeholder="Fornavn" required>
+                    </div>
+                     <div class="form-group">
+                        <input type="text" id="register-lastname" placeholder="Etternavn" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="register-email" placeholder="E-post" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="register-password" placeholder="Passord" required>
+                    </div>
+                    <button type="submit" class="auth-btn">Registrer</button>
+                    <p class="toggle-form">Har du allerede konto? <span id="show-login">Logg inn</span></p>
+                </form>
+                <p id="auth-error"></p>
+            </div>
         </div>
     </div>
 
@@ -966,11 +988,14 @@
                             grid: { color: 'rgba(255, 255, 255, 0.1)' }, 
                             ticks: { 
                                 color: 'white', 
-                                stepSize: 25,
-                                callback: function(value) {
-                                   // Sørger for at den ikke viser en tick over 100
-                                   return value <= 100 ? value : null;
-                                }
+                            },
+                            afterBuildTicks: (axis) => {
+                                axis.ticks = [];
+                                axis.ticks.push({value: 0, label: '0'});
+                                axis.ticks.push({value: 25, label: '25'});
+                                axis.ticks.push({value: 50, label: '50'});
+                                axis.ticks.push({value: 75, label: '75'});
+                                axis.ticks.push({value: 100, label: '100'});
                             }
                         },
                         x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'white' } }
